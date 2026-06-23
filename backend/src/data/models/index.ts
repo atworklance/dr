@@ -28,3 +28,8 @@ export {
   type IWithdrawalRequest,
 } from './wallet.model';
 export { Message, type IMessage, type IMessageModel } from './message.model';
+export {
+  PlatformSettings,
+  type IPlatformSettings,
+  type IPlatformSettingsModel,
+} from './platformSettings.model';

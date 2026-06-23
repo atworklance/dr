@@ -15,7 +15,6 @@
  */
 
 import mongoose from 'mongoose';
-import { config } from '../../config';
 import { Appointment, Provider, type IAppointment } from '../../data/models';
 import {
   AppointmentStatus,
@@ -26,6 +25,7 @@ import {
 import { ApiError } from '../../shared/apiError';
 import { isSlotBookable } from './availability.service';
 import { refundEscrowedAppointment } from './payment.service';
+import { getPlatformCommissionRate } from './settings.service';
 import type {
   CreateAppointmentInput,
   ListAppointmentsQuery,
@@ -68,7 +68,8 @@ export async function createAppointment(
 
   const durationMinutes = Math.round((input.end.getTime() - input.start.getTime()) / 60000);
   const amount = mode === 'online' ? provider.pricing.onlineFee : provider.pricing.clinicFee;
-  const rate = provider.commissionRateOverride ?? config.defaultCommissionRate;
+  // Per-provider override wins; otherwise use the admin-tunable platform rate.
+  const rate = provider.commissionRateOverride ?? (await getPlatformCommissionRate());
   const commissionAmount = Math.round(amount * rate);
 
   const appointment = new Appointment({
