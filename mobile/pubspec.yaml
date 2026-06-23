@@ -1,0 +1,44 @@
+name: drplus_mobile
+description: "Dr.Plus — dual-sided service provider marketplace & real-time consultation client."
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management (BLoC) + value equality
+  flutter_bloc: ^8.1.5
+  equatable: ^2.0.5
+
+  # Functional error handling (Either<Failure, T>)
+  dartz: ^0.10.1
+
+  # Networking
+  dio: ^5.4.3+1
+
+  # Dependency injection (service locator)
+  get_it: ^7.7.0
+
+  # Secure JWT persistence
+  flutter_secure_storage: ^9.2.2
+
+  # Connectivity checks for offline resiliency
+  connectivity_plus: ^6.0.3
+
+  # i18n / date formatting
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
