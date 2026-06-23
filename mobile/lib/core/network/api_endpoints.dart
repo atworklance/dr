@@ -9,6 +9,13 @@ abstract final class ApiEndpoints {
     defaultValue: 'http://10.0.2.2:4000/api/v1',
   );
 
+  /// Socket.io origin (the server root, without the `/api/v1` path). Override
+  /// with `--dart-define=SOCKET_URL=...`, otherwise derived from [baseUrl].
+  static String get socketUrl {
+    const override = String.fromEnvironment('SOCKET_URL', defaultValue: '');
+    return override.isNotEmpty ? override : Uri.parse(baseUrl).origin;
+  }
+
   // --- Auth ---------------------------------------------------------------
   static const String registerClient = '/auth/register/client';
   static const String registerProvider = '/auth/register/provider';

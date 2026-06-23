@@ -70,6 +70,17 @@ bar, and the control dock, with graceful permission-denied and error states.
 Entry point: the booking confirmation dialog ("Start video consultation") for
 online appointments.
 
+## In-call chat (`features/chat`)
+
+Realtime text chat over the backend Socket.io engine. The domain defines the
+`ChatRepository` contract + a sealed `ChatRealtimeEvent` stream; the data layer
+implements it with `socket_io_client` (JWT handshake auth, ack-based join/send,
+event mapping). `ChatCubit` loads history, renders **optimistic** outgoing
+bubbles reconciled against the server ack, and applies **delivery/read
+receipts** plus typing & presence. `ChatPanel` is a self-contained module shown
+as a modal bottom sheet from the video call's chat button — message bubbles with
+receipt ticks, an animated typing indicator, and a keyboard-aware composer.
+
 ### Native setup required for the SDK
 
 The Dart layer analyses cleanly, but `agora_rtc_engine` + `permission_handler`
@@ -92,3 +103,4 @@ flutter run --dart-define=API_BASE_URL=http://127.0.0.1:4000/api/v1  # iOS simul
 State management: `flutter_bloc`. DI: `get_it`. Networking: `dio`.
 Functional errors: `dartz`. Secure storage: `flutter_secure_storage`.
 Video: `agora_rtc_engine`. Permissions: `permission_handler`.
+Realtime chat: `socket_io_client`.

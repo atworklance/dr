@@ -7,6 +7,8 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../chat/presentation/pages/chat_panel.dart';
 import '../cubit/video_call_cubit.dart';
 import '../widgets/call_control_bar.dart';
 import '../widgets/call_top_bar.dart';
@@ -81,6 +83,16 @@ class _VideoCallViewState extends State<_VideoCallView> {
         VideoCallStatus.waiting => 'Waiting to connect',
         _ => 'Connecting…',
       };
+
+  void _openChat(BuildContext context) {
+    final userId = context.read<AuthBloc>().state.user?.id ?? '';
+    ChatPanel.show(
+      context,
+      appointmentId: widget.appointmentId,
+      currentUserId: userId,
+      peerName: widget.specialistName,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -165,6 +177,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
             statusLabel: _statusLabel(state.status),
             isLive: state.status == VideoCallStatus.connected,
             durationLabel: _durationLabel,
+            onOpenChat: () => _openChat(context),
           ),
         ),
         Align(

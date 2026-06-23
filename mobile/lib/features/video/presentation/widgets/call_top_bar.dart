@@ -11,6 +11,7 @@ class CallTopBar extends StatelessWidget {
     required this.statusLabel,
     required this.isLive,
     required this.durationLabel,
+    this.onOpenChat,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class CallTopBar extends StatelessWidget {
   final String statusLabel;
   final bool isLive;
   final String durationLabel;
+  final VoidCallback? onOpenChat;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +85,35 @@ class CallTopBar extends StatelessWidget {
                 ],
               ),
             ),
+          if (onOpenChat != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            _CircleAction(icon: Icons.chat_bubble_outline_rounded, onTap: onOpenChat!),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _CircleAction extends StatelessWidget {
+  const _CircleAction({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white24,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 42,
+          height: 42,
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
       ),
     );
   }

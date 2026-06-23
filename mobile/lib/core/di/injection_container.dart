@@ -23,6 +23,8 @@ import '../../features/booking/domain/usecases/pay_for_appointment.dart';
 import '../../features/booking/domain/usecases/search_specialists.dart';
 import '../../features/booking/presentation/bloc/booking/booking_bloc.dart';
 import '../../features/booking/presentation/bloc/search/specialist_search_bloc.dart';
+import '../../features/chat/data/repositories/chat_repository_impl.dart';
+import '../../features/chat/domain/repositories/chat_repository.dart';
 import '../../features/video/data/datasources/video_remote_data_source.dart';
 import '../../features/video/data/repositories/video_repository_impl.dart';
 import '../../features/video/data/services/agora_video_service.dart';
@@ -47,6 +49,7 @@ Future<void> initDependencies() async {
   _registerAuthFeature();
   _registerBookingFeature();
   _registerVideoFeature();
+  _registerChatFeature();
 }
 
 void _registerCore() {
@@ -176,4 +179,10 @@ void _registerVideoFeature() {
       permissionService: sl(),
     ),
   );
+}
+
+void _registerChatFeature() {
+  // The repository owns the realtime socket lifecycle (singleton), reused
+  // across conversations. ChatCubit is created per-screen with runtime params.
+  sl.registerLazySingleton<ChatRepository>(() => ChatRepositoryImpl(sl()));
 }
