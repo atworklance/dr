@@ -16,11 +16,13 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "agora-token": "^2.0.5",
     "bcryptjs": "^2.4.3",
     "express": "^4.19.2",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.1",
+    "socket.io": "^4.8.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {

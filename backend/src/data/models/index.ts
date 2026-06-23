@@ -27,3 +27,4 @@ export {
   type IWalletTransaction,
   type IWithdrawalRequest,
 } from './wallet.model';
+export { Message, type IMessage, type IMessageModel } from './message.model';

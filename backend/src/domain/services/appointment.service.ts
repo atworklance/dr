@@ -25,6 +25,7 @@ import {
 } from '../../shared/enums';
 import { ApiError } from '../../shared/apiError';
 import { isSlotBookable } from './availability.service';
+import { refundEscrowedAppointment } from './payment.service';
 import type {
   CreateAppointmentInput,
   ListAppointmentsQuery,
@@ -169,35 +170,49 @@ export async function cancelAppointment(
   role: string,
   reason?: string,
 ): Promise<IAppointment> {
-  const appointment = await Appointment.findById(appointmentId);
-  if (!appointment) {
-    throw ApiError.notFound('Appointment not found.');
-  }
+  const session = await mongoose.startSession();
+  try {
+    let result: IAppointment | null = null;
+    await session.withTransaction(async () => {
+      const appointment = await Appointment.findById(appointmentId).session(session);
+      if (!appointment) {
+        throw ApiError.notFound('Appointment not found.');
+      }
 
-  const isClient = appointment.client.toString() === userId;
-  let isProvider = false;
-  if (role === 'provider') {
-    const provider = await Provider.findOne({ user: userId }).select('_id').lean();
-    isProvider = !!provider && appointment.provider.toString() === provider._id.toString();
-  }
-  if (!isClient && !isProvider && role !== 'admin') {
-    throw ApiError.forbidden('You are not a participant in this appointment.');
-  }
+      const isClient = appointment.client.toString() === userId;
+      let isProvider = false;
+      if (role === 'provider') {
+        const provider = await Provider.findOne({ user: userId }).select('_id').session(session).lean();
+        isProvider = !!provider && appointment.provider.toString() === provider._id.toString();
+      }
+      if (!isClient && !isProvider && role !== 'admin') {
+        throw ApiError.forbidden('You are not a participant in this appointment.');
+      }
 
-  const cancellable: AppointmentStatus[] = [
-    AppointmentStatus.PENDING_PAYMENT,
-    AppointmentStatus.CONFIRMED,
-  ];
-  if (!cancellable.includes(appointment.status)) {
-    throw ApiError.conflict(`An appointment in status "${appointment.status}" cannot be cancelled.`);
+      const cancellable: AppointmentStatus[] = [
+        AppointmentStatus.PENDING_PAYMENT,
+        AppointmentStatus.CONFIRMED,
+      ];
+      if (!cancellable.includes(appointment.status)) {
+        throw ApiError.conflict(
+          `An appointment in status "${appointment.status}" cannot be cancelled.`,
+        );
+      }
+
+      // Reverse any escrowed funds back to the client before finalising state.
+      await refundEscrowedAppointment(appointment, session);
+
+      appointment.status = isClient
+        ? AppointmentStatus.CANCELLED_BY_CLIENT
+        : AppointmentStatus.CANCELLED_BY_PROVIDER;
+      appointment.cancelledBy = new mongoose.Types.ObjectId(userId);
+      if (reason) appointment.cancellationReason = reason;
+
+      await appointment.save({ session });
+      result = appointment;
+    });
+    return result as unknown as IAppointment;
+  } finally {
+    await session.endSession();
   }
-
-  appointment.status = isClient
-    ? AppointmentStatus.CANCELLED_BY_CLIENT
-    : AppointmentStatus.CANCELLED_BY_PROVIDER;
-  appointment.cancelledBy = new mongoose.Types.ObjectId(userId);
-  if (reason) appointment.cancellationReason = reason;
-
-  await appointment.save();
-  return appointment;
 }

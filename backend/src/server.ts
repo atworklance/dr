@@ -3,22 +3,29 @@
  * graceful shutdown on termination signals.
  */
 
+import { createServer } from 'http';
 import { createApp } from './app';
 import { config } from './config';
 import { connectDatabase, disconnectDatabase } from './data/db';
+import { initSocketServer } from './realtime';
 
 async function bootstrap(): Promise<void> {
   await connectDatabase(config.mongoUri);
 
   const app = createApp();
-  const server = app.listen(config.port, () => {
+  // Share a single HTTP server between Express and Socket.io.
+  const server = createServer(app);
+  const io = initSocketServer(server);
+
+  server.listen(config.port, () => {
     // eslint-disable-next-line no-console
-    console.info(`[server] Dr.Plus API listening on port ${config.port} (${config.env}).`);
+    console.info(`[server] Dr.Plus API + realtime listening on port ${config.port} (${config.env}).`);
   });
 
   const shutdown = async (signal: string): Promise<void> => {
     // eslint-disable-next-line no-console
     console.info(`[server] ${signal} received — shutting down gracefully.`);
+    io.close();
     server.close(async () => {
       await disconnectDatabase();
       process.exit(0);

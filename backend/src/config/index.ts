@@ -53,7 +53,20 @@ export const config = {
   bcryptRounds: intFromEnv('BCRYPT_ROUNDS', 12),
   /** Default platform commission as a fraction (0–1) when a provider has no override. */
   defaultCommissionRate: floatFromEnv('DEFAULT_COMMISSION_RATE', 0.15),
+  /** Minimum provider withdrawal amount, in integer minor currency units (cents). */
+  minWithdrawalMinorUnits: intFromEnv('MIN_WITHDRAWAL_MINOR_UNITS', 1000),
+  /** Agora real-time video configuration. */
+  agora: {
+    appId: process.env.AGORA_APP_ID ?? '',
+    appCertificate: process.env.AGORA_APP_CERTIFICATE ?? '',
+    /** Lifetime of an issued RTC token / privilege, in seconds (default 1h). */
+    tokenTtlSeconds: intFromEnv('AGORA_TOKEN_TTL_SECONDS', 3600),
+  },
 } as const;
+
+/** True only when Agora credentials are fully configured. */
+export const isAgoraConfigured = (): boolean =>
+  config.agora.appId.length > 0 && config.agora.appCertificate.length > 0;
 
 if (config.defaultCommissionRate < 0 || config.defaultCommissionRate > 1) {
   throw new Error('DEFAULT_COMMISSION_RATE must be a fraction between 0 and 1.');
