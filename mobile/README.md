@@ -70,6 +70,23 @@ bar, and the control dock, with graceful permission-denied and error states.
 Entry point: the booking confirmation dialog ("Start video consultation") for
 online appointments.
 
+## Provider side
+
+Providers are routed (by `AuthGate`, on `user.isProvider`) to `ProviderHomePage`
+— a bottom-nav shell over the revenue dashboard and availability calendar, with
+a globally-listening incoming-call overlay on top.
+
+- **Availability calendar (`features/availability`)** — edits the full matrix:
+  Holiday Mode toggle, recurring weekly windows with session breaks (time
+  pickers), and date exceptions. Weekly edits are staged in a draft and saved in
+  one call (`PUT /weekly`); Holiday Mode and exceptions persist immediately.
+- **Incoming call handler (`features/calls`)** — joins the provider's confirmed
+  appointment rooms over the socket and surfaces `call:incoming` as a full-screen
+  alert with a pulsing avatar and accept/decline; accepting opens the video call.
+- **Revenue dashboard (`features/wallet`)** — available/pending/escrow balances,
+  lifetime earned/withdrawn, the earnings log (ledger), pending-withdrawal
+  banner, and a payout request sheet (`POST /wallets/me/withdrawals`).
+
 ## In-call chat (`features/chat`)
 
 Realtime text chat over the backend Socket.io engine. The domain defines the

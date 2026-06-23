@@ -8,6 +8,7 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/cubit/role_selection_cubit.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/booking/presentation/pages/specialist_search_page.dart';
+import 'features/provider_home/presentation/pages/provider_home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,7 +57,9 @@ class _AuthGate extends StatelessWidget {
           AuthStatus.unknown ||
           AuthStatus.authenticating =>
             const _SplashScreen(),
-          AuthStatus.authenticated => const SpecialistSearchPage(),
+          AuthStatus.authenticated => (state.user?.isProvider ?? false)
+              ? const ProviderHomePage()
+              : const SpecialistSearchPage(),
           AuthStatus.unauthenticated => const LoginPage(),
         };
         return AnimatedSwitcher(

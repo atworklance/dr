@@ -21,8 +21,18 @@ import '../../features/booking/domain/usecases/book_appointment.dart';
 import '../../features/booking/domain/usecases/get_specialist_details.dart';
 import '../../features/booking/domain/usecases/pay_for_appointment.dart';
 import '../../features/booking/domain/usecases/search_specialists.dart';
+import '../../features/availability/data/datasources/availability_remote_data_source.dart';
+import '../../features/availability/data/repositories/availability_repository_impl.dart';
+import '../../features/availability/domain/repositories/availability_repository.dart';
+import '../../features/availability/domain/usecases/get_availability.dart';
+import '../../features/availability/domain/usecases/set_holiday_mode.dart';
+import '../../features/availability/domain/usecases/update_weekly_availability.dart';
+import '../../features/availability/domain/usecases/upsert_availability_exception.dart';
+import '../../features/availability/presentation/cubit/availability_cubit.dart';
 import '../../features/booking/presentation/bloc/booking/booking_bloc.dart';
 import '../../features/booking/presentation/bloc/search/specialist_search_bloc.dart';
+import '../../features/calls/data/repositories/call_signaling_repository_impl.dart';
+import '../../features/calls/domain/repositories/call_signaling_repository.dart';
 import '../../features/chat/data/repositories/chat_repository_impl.dart';
 import '../../features/chat/domain/repositories/chat_repository.dart';
 import '../../features/video/data/datasources/video_remote_data_source.dart';
@@ -33,6 +43,12 @@ import '../../features/video/domain/usecases/end_video_session.dart';
 import '../../features/video/domain/usecases/get_video_token.dart';
 import '../../features/video/domain/usecases/start_video_session.dart';
 import '../../features/video/presentation/cubit/video_call_cubit.dart';
+import '../../features/wallet/data/datasources/wallet_remote_data_source.dart';
+import '../../features/wallet/data/repositories/wallet_repository_impl.dart';
+import '../../features/wallet/domain/repositories/wallet_repository.dart';
+import '../../features/wallet/domain/usecases/get_wallet_summary.dart';
+import '../../features/wallet/domain/usecases/request_withdrawal.dart';
+import '../../features/wallet/presentation/cubit/wallet_cubit.dart';
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
 import '../network/auth_interceptor.dart';
@@ -50,6 +66,9 @@ Future<void> initDependencies() async {
   _registerBookingFeature();
   _registerVideoFeature();
   _registerChatFeature();
+  _registerAvailabilityFeature();
+  _registerWalletFeature();
+  _registerCallsFeature();
 }
 
 void _registerCore() {
@@ -185,4 +204,49 @@ void _registerChatFeature() {
   // The repository owns the realtime socket lifecycle (singleton), reused
   // across conversations. ChatCubit is created per-screen with runtime params.
   sl.registerLazySingleton<ChatRepository>(() => ChatRepositoryImpl(sl()));
+}
+
+void _registerAvailabilityFeature() {
+  sl
+    ..registerLazySingleton<AvailabilityRemoteDataSource>(
+      () => AvailabilityRemoteDataSourceImpl(sl()),
+    )
+    ..registerLazySingleton<AvailabilityRepository>(
+      () => AvailabilityRepositoryImpl(remote: sl(), networkInfo: sl()),
+    )
+    ..registerLazySingleton(() => GetAvailability(sl()))
+    ..registerLazySingleton(() => UpdateWeeklyAvailability(sl()))
+    ..registerLazySingleton(() => UpsertAvailabilityException(sl()))
+    ..registerLazySingleton(() => SetHolidayMode(sl()))
+    ..registerFactory(
+      () => AvailabilityCubit(
+        getAvailability: sl(),
+        updateWeekly: sl(),
+        upsertException: sl(),
+        setHolidayMode: sl(),
+      ),
+    );
+}
+
+void _registerWalletFeature() {
+  sl
+    ..registerLazySingleton<WalletRemoteDataSource>(
+      () => WalletRemoteDataSourceImpl(sl()),
+    )
+    ..registerLazySingleton<WalletRepository>(
+      () => WalletRepositoryImpl(remote: sl(), networkInfo: sl()),
+    )
+    ..registerLazySingleton(() => GetWalletSummary(sl()))
+    ..registerLazySingleton(() => RequestWithdrawal(sl()))
+    ..registerFactory(
+      () => WalletCubit(getWalletSummary: sl(), requestWithdrawal: sl()),
+    );
+}
+
+void _registerCallsFeature() {
+  // Signalling repository owns its own socket; IncomingCallCubit is created in
+  // the provider shell with the current user id.
+  sl.registerLazySingleton<CallSignalingRepository>(
+    () => CallSignalingRepositoryImpl(client: sl(), tokenStore: sl()),
+  );
 }

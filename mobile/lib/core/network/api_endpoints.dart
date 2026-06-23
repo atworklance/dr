@@ -35,4 +35,14 @@ abstract final class ApiEndpoints {
   static String videoToken(String id) => '/appointments/$id/video/token';
   static String videoStart(String id) => '/appointments/$id/video/start';
   static String videoEnd(String id) => '/appointments/$id/video/end';
+
+  // --- Provider availability ----------------------------------------------
+  static const String availability = '/providers/me/availability';
+  static const String availabilityWeekly = '/providers/me/availability/weekly';
+  static const String availabilityExceptions = '/providers/me/availability/exceptions';
+  static const String availabilityHolidayMode = '/providers/me/availability/holiday-mode';
+
+  // --- Provider wallet ----------------------------------------------------
+  static const String walletMe = '/wallets/me';
+  static const String walletWithdrawals = '/wallets/me/withdrawals';
 }
