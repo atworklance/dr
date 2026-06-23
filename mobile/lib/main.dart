@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/di/injection_container.dart';
+import 'core/theme/app_colors.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/cubit/role_selection_cubit.dart';
+import 'features/auth/presentation/pages/login_page.dart';
+import 'features/booking/presentation/pages/specialist_search_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,9 +15,9 @@ Future<void> main() async {
   runApp(const DrPlusApp());
 }
 
-/// Root widget. Provides the app-wide auth state and kicks off session
-/// restoration. Feature screens (search/booking) create their own scoped BLoCs
-/// from the service locator when navigated to.
+/// Root widget. Provides the app-wide auth state + role-selection state, kicks
+/// off session restoration, and routes between the auth flow and the
+/// authenticated shell.
 class DrPlusApp extends StatelessWidget {
   const DrPlusApp({super.key});
 
@@ -31,41 +35,74 @@ class DrPlusApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Dr.Plus',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0F6FFF)),
-          useMaterial3: true,
-        ),
+        theme: AppTheme.light(),
         home: const _AuthGate(),
       ),
     );
   }
 }
 
-/// Routes between authenticated / unauthenticated shells based on [AuthState].
-/// Concrete screens are added in subsequent UI blocks; this gate proves the
-/// state wiring end-to-end.
+/// Switches between the splash, the auth flow, and the authenticated home shell
+/// based on [AuthState]. A fade transition keeps the handoff smooth.
 class _AuthGate extends StatelessWidget {
   const _AuthGate();
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
+      buildWhen: (prev, curr) => prev.status != curr.status,
       builder: (context, state) {
-        final Widget body = switch (state.status) {
+        final Widget screen = switch (state.status) {
           AuthStatus.unknown ||
           AuthStatus.authenticating =>
-            const Center(child: CircularProgressIndicator()),
-          AuthStatus.authenticated => Center(
-              child: Text('Signed in as ${state.user?.fullName ?? ''}'),
-            ),
-          AuthStatus.unauthenticated => Center(
-              child: Text(
-                state.failure?.message ?? 'Please sign in to continue.',
-              ),
-            ),
+            const _SplashScreen(),
+          AuthStatus.authenticated => const SpecialistSearchPage(),
+          AuthStatus.unauthenticated => const LoginPage(),
         };
-        return Scaffold(body: SafeArea(child: body));
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          child: KeyedSubtree(
+            key: ValueKey(screen.runtimeType),
+            child: screen,
+          ),
+        );
       },
+    );
+  }
+}
+
+class _SplashScreen extends StatelessWidget {
+  const _SplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: DecoratedBox(
+        decoration: BoxDecoration(gradient: AppColors.brandGradient),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.medical_services_rounded, color: Colors.white, size: 56),
+              SizedBox(height: 16),
+              Text(
+                'Dr.Plus',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 24),
+              SizedBox(
+                height: 26,
+                width: 26,
+                child: CircularProgressIndicator(strokeWidth: 2.6, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
