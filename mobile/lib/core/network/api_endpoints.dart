@@ -23,4 +23,9 @@ abstract final class ApiEndpoints {
   static const String appointments = '/appointments';
   static String appointmentById(String id) => '/appointments/$id';
   static String payAppointment(String id) => '/appointments/$id/pay';
+
+  // --- Live video session -------------------------------------------------
+  static String videoToken(String id) => '/appointments/$id/video/token';
+  static String videoStart(String id) => '/appointments/$id/video/start';
+  static String videoEnd(String id) => '/appointments/$id/video/end';
 }

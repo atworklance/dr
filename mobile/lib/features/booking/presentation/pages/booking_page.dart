@@ -12,6 +12,7 @@ import '../../../../core/widgets/primary_button.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/entities/booking_request.dart';
 import '../../domain/entities/specialist.dart';
+import '../../../video/presentation/pages/video_call_page.dart';
 import '../bloc/booking/booking_bloc.dart';
 import '../widgets/consultation_mode_selector.dart';
 import '../widgets/day_selector.dart';
@@ -129,6 +130,19 @@ class _BookingViewState extends State<_BookingView> {
           Navigator.of(dialogContext).pop();
           Navigator.of(context).pop();
         },
+        onStartVideo: appointment.mode == ConsultationMode.online
+            ? () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => VideoCallPage(
+                      appointmentId: appointment.id,
+                      specialistName: _specialist.displayName,
+                    ),
+                  ),
+                );
+              }
+            : null,
       ),
     );
   }
@@ -399,11 +413,13 @@ class _ConfirmationDialog extends StatelessWidget {
     required this.appointment,
     required this.specialistName,
     required this.onDone,
+    this.onStartVideo,
   });
 
   final Appointment appointment;
   final String specialistName;
   final VoidCallback onDone;
+  final VoidCallback? onStartVideo;
 
   @override
   Widget build(BuildContext context) {
@@ -470,7 +486,16 @@ class _ConfirmationDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            PrimaryButton(label: 'Done', onPressed: onDone),
+            if (onStartVideo != null) ...[
+              PrimaryButton(
+                label: 'Start video consultation',
+                icon: Icons.videocam_rounded,
+                onPressed: onStartVideo,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextButton(onPressed: onDone, child: const Text('Later')),
+            ] else
+              PrimaryButton(label: 'Done', onPressed: onDone),
           ],
         ),
       ),

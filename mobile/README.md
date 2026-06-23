@@ -57,6 +57,30 @@ offline. BLoCs `fold` the result into discrete, equatable states.
 > already carries the geo/specialty/text/rating indexes for it; wiring the
 > route + controller is the matching backend follow-up.
 
+## Live video consultation (`features/video`)
+
+The video call follows the same Clean layering. The domain stays pure (token
+entity + use cases hitting `POST /appointments/:id/video/{token,start,end}`),
+while the Agora SDK is isolated behind `AgoraVideoService` (infra) and runtime
+permissions behind `MediaPermissionService`. `VideoCallCubit` orchestrates the
+pipeline — **request permissions → fetch token → init engine → join channel** —
+and exposes call controls (mute, camera, flip, hang-up). `VideoCallPage` renders
+the remote feed full-screen with a local picture-in-picture, a status/timer top
+bar, and the control dock, with graceful permission-denied and error states.
+Entry point: the booking confirmation dialog ("Start video consultation") for
+online appointments.
+
+### Native setup required for the SDK
+
+The Dart layer analyses cleanly, but `agora_rtc_engine` + `permission_handler`
+need platform config when the `android/` and `ios/` folders are generated
+(`flutter create .`):
+
+- **Android** — `minSdkVersion 21`; add `CAMERA`, `RECORD_AUDIO`, and
+  `INTERNET` permissions to `AndroidManifest.xml`.
+- **iOS** — add `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`
+  to `Info.plist`; set the platform to iOS 12+.
+
 ## Running
 
 ```bash
@@ -67,3 +91,4 @@ flutter run --dart-define=API_BASE_URL=http://127.0.0.1:4000/api/v1  # iOS simul
 
 State management: `flutter_bloc`. DI: `get_it`. Networking: `dio`.
 Functional errors: `dartz`. Secure storage: `flutter_secure_storage`.
+Video: `agora_rtc_engine`. Permissions: `permission_handler`.

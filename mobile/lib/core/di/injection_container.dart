@@ -23,10 +23,19 @@ import '../../features/booking/domain/usecases/pay_for_appointment.dart';
 import '../../features/booking/domain/usecases/search_specialists.dart';
 import '../../features/booking/presentation/bloc/booking/booking_bloc.dart';
 import '../../features/booking/presentation/bloc/search/specialist_search_bloc.dart';
+import '../../features/video/data/datasources/video_remote_data_source.dart';
+import '../../features/video/data/repositories/video_repository_impl.dart';
+import '../../features/video/data/services/agora_video_service.dart';
+import '../../features/video/domain/repositories/video_repository.dart';
+import '../../features/video/domain/usecases/end_video_session.dart';
+import '../../features/video/domain/usecases/get_video_token.dart';
+import '../../features/video/domain/usecases/start_video_session.dart';
+import '../../features/video/presentation/cubit/video_call_cubit.dart';
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
 import '../network/auth_interceptor.dart';
 import '../network/network_info.dart';
+import '../services/media_permission_service.dart';
 import '../storage/auth_token_store.dart';
 
 /// Global service locator.
@@ -37,6 +46,7 @@ Future<void> initDependencies() async {
   _registerCore();
   _registerAuthFeature();
   _registerBookingFeature();
+  _registerVideoFeature();
 }
 
 void _registerCore() {
@@ -131,4 +141,39 @@ void _registerBookingFeature() {
     ..registerFactory(
       () => BookingBloc(bookAppointment: sl(), payForAppointment: sl()),
     );
+}
+
+void _registerVideoFeature() {
+  // Infrastructure
+  sl
+    ..registerLazySingleton<MediaPermissionService>(
+      () => const MediaPermissionServiceImpl(),
+    )
+    ..registerLazySingleton<AgoraVideoService>(AgoraVideoServiceImpl.new);
+
+  // Data source + repository
+  sl
+    ..registerLazySingleton<VideoRemoteDataSource>(
+      () => VideoRemoteDataSourceImpl(sl()),
+    )
+    ..registerLazySingleton<VideoRepository>(
+      () => VideoRepositoryImpl(remote: sl(), networkInfo: sl()),
+    );
+
+  // Use cases
+  sl
+    ..registerLazySingleton(() => GetVideoToken(sl()))
+    ..registerLazySingleton(() => StartVideoSession(sl()))
+    ..registerLazySingleton(() => EndVideoSession(sl()));
+
+  // Presentation
+  sl.registerFactory(
+    () => VideoCallCubit(
+      getVideoToken: sl(),
+      startVideoSession: sl(),
+      endVideoSession: sl(),
+      agoraService: sl(),
+      permissionService: sl(),
+    ),
+  );
 }
